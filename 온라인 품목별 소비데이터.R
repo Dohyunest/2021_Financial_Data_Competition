@@ -7,11 +7,6 @@ library(stringr)
 # 1. Read data ------------------------------------------------------------
 d1 <- fread("C:/Users/user/Desktop/2021_Financial_Data_Competition/Data/온라인 품목별 소비데이터.csv") 
 
-d2 <- fread("C:/Users/user/Desktop/2021_Financial_Data_Competition/Data/지역별 통계 데이터.csv", encoding = "UTF-8") 
-
-d3 <- fread("C:/Users/user/Desktop/2021_Financial_Data_Competition/Data/신설법인 데이터.csv", encoding = "UTF-8") 
-
-
 colSums(is.na(d1)) #결측치는 존재하지 않음. 
 d1$기준년 <- str_sub(d1$기준년월, 1, 4)
 
@@ -30,6 +25,7 @@ d2021 <- d1 %>%
 
 
 # 2. EDA ------------------------------------------------------------------
+#데이터는 집계(3월, 9월) 데이터이기 때문에 코로나 전, 후로 데이터를 분석할 예정. 
 ##2019년
 sort(round(prop.table(table(d2019$품목대분류명))*100,2)) #e상품/서비스, 여가/스포츠, 식품, 출산/육아 순임. 
 a1 <- d2019 %>% 
