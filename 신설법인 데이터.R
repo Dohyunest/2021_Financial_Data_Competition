@@ -80,8 +80,14 @@ o2 <- d11 %>%
   summarise(mean_money = mean(자본금)) %>% 
   arrange(시도, 설립일자,desc(mean_money)) 
 
+write.csv(d11,"C:/Users/user/Desktop/2021_Financial_Data_Competition/Data/신설법인 데이터_전처리.csv") 
+
+
 #####할 것.
 #최소 자본금이 필요한 업종 매핑 필요!!! 근데 확인하는게 쉽지 않음 
 #최소 자본금을 설정한 기업과 설정하지 못한 기업 비율 확인!!!! (나중에 ui/ux 구현시 현황 같이 제시)
 #지역별 지표 추가 (엑셀에서 정하기)
 #
+
+table(d11$시도)
+
