@@ -28,7 +28,11 @@ data5$년도 <- rep(2020, nrow(data5))
 data6 <- rbind(data3, data4, data5)
 data6$년도 <- as.character(data6$년도)
 
+data7 <- fread("C:/Users/user/Desktop/2021_Financial_Data_Competition/Data/물가지수.csv", encoding = "UTF-8")
+data7$년도 <- as.character(data7$년도)
 
+data8 <- fread("C:/Users/user/Desktop/2021_Financial_Data_Competition/Data/상업용 부동산 임대동향.csv", encoding = "UTF-8")
+data8$년도 <- as.character(data8$년도)
 
 # 2. EDA ------------------------------------------------------------------
 #2-1. 주식수와 주당금액이 있는데 자본금이 없는 데이터가 존재. -> 주당금액이 모두 있는 데이터 정제 필요
@@ -80,14 +84,24 @@ o2 <- d11 %>%
   summarise(mean_money = mean(자본금)) %>% 
   arrange(시도, 설립일자,desc(mean_money)) 
 
-write.csv(d11,"C:/Users/user/Desktop/2021_Financial_Data_Competition/Data/신설법인 데이터_전처리.csv") 
 
+#6. 소비자물가지수, 생활물가지수 추가
+d12 <- merge(d11, data7, by.x = c("시도","설립일자"), by.y = c("지역","년도"))
+d13 <- d12[,c(3:11,2,1,12:26)]
+
+
+#7. 부동산 임대료 추가
+d14 <- merge(d13, data8, by.x = c("시도","설립일자"), by.y = c("지역","년도"))
+d15 <- d14[,c(3:11,2,1,12:30)]
+d15$오피스임대료 <- d15$오피스임대료*1000
+d15$중대형상가임대료 <- d15$중대형상가임대료*1000
+d15$소규모상가임대료 <- d15$소규모상가임대료*1000
+d15$집합상가임대료 <- d15$집합상가임대료*1000
 
 #####할 것.
 #최소 자본금이 필요한 업종 매핑 필요!!! 근데 확인하는게 쉽지 않음 
 #최소 자본금을 설정한 기업과 설정하지 못한 기업 비율 확인!!!! (나중에 ui/ux 구현시 현황 같이 제시)
 #지역별 지표 추가 (엑셀에서 정하기)
-#
 
-table(d11$시도)
+
 
