@@ -6,14 +6,14 @@ library(ggplot2)
 
 # 1. Read data ------------------------------------------------------------
 ##데이터는 집계(3월, 9월) 데이터이기 때문에 코로나 전, 후로 데이터를 분석할 예정. 
-d1 <- fread("C:/Users/user/Desktop/2021_Financial_Data_Competition/Data/온라인 품목별 소비데이터.csv") 
+d1 <- fread("C:/Users/user/Desktop/2021_Financial_Data_Competition/Data/2.온라인 품목별 소비데이터.csv") 
 
 colSums(is.na(d1)) #결측치는 존재하지 않음. 
 d1$기준년 <- str_sub(d1$기준년월, 1, 4)
 d1$품목대분류코드 <- as.numeric(d1$품목대분류코드)
 d1$기준년월 <- as.character(d1$기준년월)
 
-d2 <- fread("C:/Users/user/Desktop/2021_Financial_Data_Competition/Data/업종중분류코드.csv", encoding = "UTF-8")
+d2 <- fread("C:/Users/user/Desktop/2021_Financial_Data_Competition/Data/5.업종중분류코드.csv", encoding = "UTF-8")
 d2$중분류코드 <- str_sub(d2$중분류, 2,3)
 
 #d3 <- merge(d1, d2, by.x = d1$품목대분류코드, by.y = d2$중분류코드)
