@@ -15,15 +15,197 @@ d1$기준년월 <- as.character(d1$기준년월)
 #해당 데이터의 대분류,중분류명은 표준산업코드가 아닌 BC카드에서 자체적으로 만든 분류명으로 표준산업분류코드와 같이 활용하기 어려움. 
 
 
-# 2. EDA ------------------------------------------------------------------
-#2-0. 년도별, 지역별, 대분류명별 평균매출금액(총 매출금액) / (총 매출건수) 계산
-o1 <- d1 %>% 
-  group_by(기준년, 고객소재지_광역시도, 품목대분류명) %>% 
+# 2. 지역별 EDA ------------------------------------------------------------------
+#2-0. 년도별, 대분류명별, 중분류명별 평균매출금액(총 매출금액) / (총 매출건수) 계산
+r1 <- d1 %>% 
+  group_by(기준년월, 고객소재지_광역시도, 품목대분류명) %>% 
   summarise(총매출건수 = sum(매출건수), 총매출금액 = sum(매출금액)) %>% 
-  mutate(평균매출금액 = 총매출금액 / 총매출건수)
+  mutate(평균매출금액 = 총매출금액 / 총매출건수) 
+  
+r2 <- d1 %>% 
+  group_by(기준년월, 고객소재지_광역시도, 품목대분류명, 품목중분류명) %>% 
+  summarise(총매출건수 = sum(매출건수), 총매출금액 = sum(매출금액)) %>% 
+  mutate(평균매출금액 = 총매출금액 / 총매출건수) 
+  
+
+#2-1. 년도별, 대분류명별,중분류명별 평균매출 건수
+r3 <- d1 %>% 
+  group_by(기준년월, 고객소재지_광역시도, 품목대분류명) %>% 
+  summarise(평균매출건수 = mean(매출건수))
+
+r4 <- d1 %>% 
+  group_by(기준년월, 고객소재지_광역시도, 품목대분류명, 품목중분류명) %>% 
+  summarise(평균매출건수 = mean(매출건수))
 
 
-호진이 한테 넘겨줄 데이터!!!!
+#2-2. 년도별, 대분류별, 중분류별 성별 비율 확인
+r5 <- d1 %>% 
+  group_by(기준년월, 고객소재지_광역시도, 품목대분류명, 성별) %>% 
+  summarise(n = n()) %>% 
+  mutate(percent = round(n / sum(n) * 100,2))
+
+r6 <- d1 %>% 
+  group_by(기준년월, 고객소재지_광역시도, 품목대분류명, 품목중분류명,성별) %>% 
+  summarise(n = n()) %>% 
+  mutate(percent = round(n / sum(n) * 100,2))
+
+#2-3. 년도별, 대분류별,중분류명별 가구생애주기 비율 확인 
+r7 <- d1 %>% 
+  group_by(기준년월, 고객소재지_광역시도, 품목대분류명, 가구생애주기) %>% 
+  summarise(n = n()) %>% 
+  mutate(percent = round(n / sum(n) * 100,2))
+
+r8 <- d1 %>% 
+  group_by(기준년월, 고객소재지_광역시도, 품목대분류명, 품목중분류명, 가구생애주기) %>% 
+  summarise(n = n()) %>% 
+  mutate(percent = round(n / sum(n) * 100,2))
+
+#2-4. 년도별, 대분류별,중분류명별 연령 비율 확인 
+r9 <- d1 %>% 
+  group_by(기준년월, 고객소재지_광역시도, 품목대분류명, 연령) %>% 
+  summarise(n = n()) %>% 
+  mutate(percent = round(n / sum(n) * 100,2))
+
+r10 <- d1 %>% 
+  group_by(기준년월, 고객소재지_광역시도, 품목대분류명, 품목중분류명, 연령) %>% 
+  summarise(n = n()) %>% 
+  mutate(percent = round(n / sum(n) * 100,2))
+
+#2-5. 201903과 202103의 총매출금액, 총매출건수 증감률 계산
+r11 <- r1 %>% 
+  filter(기준년월 == "201903" | 기준년월 == "202103") %>% 
+  arrange(기준년월, 품목대분류명)
+
+r11_seoul <- r11 %>% 
+  filter(고객소재지_광역시도 == "서울특별시")
+r11_gyeonggido <- r11 %>% 
+  filter(고객소재지_광역시도 == "경기도")
+r11_incheon <- r11 %>% 
+  filter(고객소재지_광역시도 == "인천광역시")
+
+#서울 증감률
+r11_seoul_result <- data.frame(rep(NA, nrow(r11_seoul)/2), rep(NA, nrow(r11_seoul)/2), rep(NA, nrow(r11_seoul)/2))
+for (i in 1:(nrow(r11_seoul)/2)) {
+  if (r11_seoul[i,3] == r11_seoul[i+13,3]) {
+    r11_seoul_result[i,1] <- r11_seoul[i,3]
+    r11_seoul_result[i,2] <- round((r11_seoul[i+13,5] - r11_seoul[i, 5]) / r11_seoul[i, 5] * 100,2)
+    r11_seoul_result[i,3] <- round((r11_seoul[i+13,4] - r11_seoul[i, 4]) / r11_seoul[i, 4] * 100,2)
+  }
+}
+colnames(r11_seoul_result)[1] <- "품목대분류명"
+colnames(r11_seoul_result)[2] <- "총매출금액 증감률"
+colnames(r11_seoul_result)[3] <- "총매출건수 증감률"
+r11_seoul_result$고객소재지_광역시도 <- rep("서울특별시", nrow(r11_seoul_result))
+r11_seoul_result <- r11_seoul_result[,c(4,1:3)]
+
+#경기도 증감률
+r11_gyeonggido_result <- data.frame(rep(NA, nrow(r11_gyeonggido)/2), rep(NA, nrow(r11_gyeonggido)/2), rep(NA, nrow(r11_gyeonggido)/2))
+for (i in 1:(nrow(r11_gyeonggido)/2)) {
+  if (r11_gyeonggido[i,3] == r11_gyeonggido[i+13,3]) {
+    r11_gyeonggido_result[i,1] <- r11_gyeonggido[i,3]
+    r11_gyeonggido_result[i,2] <- round((r11_gyeonggido[i+13,5] - r11_gyeonggido[i, 5]) / r11_gyeonggido[i, 5] * 100,2)
+    r11_gyeonggido_result[i,3] <- round((r11_gyeonggido[i+13,4] - r11_gyeonggido[i, 4]) / r11_gyeonggido[i, 4] * 100,2)
+  }
+}
+colnames(r11_gyeonggido_result)[1] <- "품목대분류명"
+colnames(r11_gyeonggido_result)[2] <- "총매출금액 증감률"
+colnames(r11_gyeonggido_result)[3] <- "총매출건수 증감률"
+r11_gyeonggido_result$고객소재지_광역시도 <- rep("경기도", nrow(r11_gyeonggido_result))
+r11_gyeonggido_result <- r11_gyeonggido_result[,c(4,1:3)]
+
+#인천 증감률
+r11_incheon_result <- data.frame(rep(NA, nrow(r11_incheon)/2), rep(NA, nrow(r11_incheon)/2), rep(NA, nrow(r11_incheon)/2))
+for (i in 1:(nrow(r11_incheon)/2)) {
+  if (r11_incheon[i,3] == r11_incheon[i+13,3]) {
+    r11_incheon_result[i,1] <- r11_incheon[i,3]
+    r11_incheon_result[i,2] <- round((r11_incheon[i+13,5] - r11_incheon[i, 5]) / r11_incheon[i, 5] * 100,2)
+    r11_incheon_result[i,3] <- round((r11_incheon[i+13,4] - r11_incheon[i, 4]) / r11_incheon[i, 4] * 100,2)
+  }
+}
+colnames(r11_incheon_result)[1] <- "품목대분류명"
+colnames(r11_incheon_result)[2] <- "총매출금액 증감률"
+colnames(r11_incheon_result)[3] <- "총매출건수 증감률"
+r11_incheon_result$고객소재지_광역시도 <- rep("인천광역시", nrow(r11_incheon_result))
+r11_incheon_result <- r11_incheon_result[,c(4,1:3)]
+
+r11_result <- rbind(r11_seoul_result, r11_gyeonggido_result, r11_incheon_result)
+
+
+# 3. 전국 EDA ------------------------------------------------------------------
+#3-0. 년도별, 대분류명별, 중분류명별 평균매출금액(총 매출금액) / (총 매출건수) 계산
+w1 <- d1 %>% 
+  group_by(기준년월, 품목대분류명) %>% 
+  summarise(총매출건수 = sum(매출건수), 총매출금액 = sum(매출금액)) %>% 
+  mutate(평균매출금액 = 총매출금액 / 총매출건수) 
+
+
+w2 <- d1 %>% 
+  group_by(기준년월, 품목대분류명, 품목중분류명) %>% 
+  summarise(총매출건수 = sum(매출건수), 총매출금액 = sum(매출금액)) %>% 
+  mutate(평균매출금액 = 총매출금액 / 총매출건수) 
+
+
+#3-1. 년도별, 대분류명별,중분류명별 평균매출 건수
+w3 <- d1 %>% 
+  group_by(기준년월, 품목대분류명) %>% 
+  summarise(평균매출건수 = mean(매출건수))
+
+w4 <- d1 %>% 
+  group_by(기준년월, 품목대분류명, 품목중분류명) %>% 
+  summarise(평균매출건수 = mean(매출건수))
+
+
+#3-2. 년도별, 대분류별, 중분류별 성별 비율 확인
+w5 <- d1 %>% 
+  group_by(기준년월, 품목대분류명, 성별) %>% 
+  summarise(n = n()) %>% 
+  mutate(percent = round(n / sum(n) * 100,2))
+
+w6 <- d1 %>% 
+  group_by(기준년월, 품목대분류명, 품목중분류명,성별) %>% 
+  summarise(n = n()) %>% 
+  mutate(percent = round(n / sum(n) * 100,2))
+
+#3-3. 년도별, 대분류별,중분류명별 가구생애주기 비율 확인 
+w7 <- d1 %>% 
+  group_by(기준년월, 품목대분류명, 가구생애주기) %>% 
+  summarise(n = n()) %>% 
+  mutate(percent = round(n / sum(n) * 100,2))
+
+w8 <- d1 %>% 
+  group_by(기준년월, 품목대분류명, 품목중분류명, 가구생애주기) %>% 
+  summarise(n = n()) %>% 
+  mutate(percent = round(n / sum(n) * 100,2))
+
+#3-4. 년도별, 대분류별,중분류명별 연령 비율 확인 
+w9 <- d1 %>% 
+  group_by(기준년월, 품목대분류명, 연령) %>% 
+  summarise(n = n()) %>% 
+  mutate(percent = round(n / sum(n) * 100,2))
+
+w10 <- d1 %>% 
+  group_by(기준년월, 품목대분류명, 품목중분류명, 연령) %>% 
+  summarise(n = n()) %>% 
+  mutate(percent = round(n / sum(n) * 100,2))
+
+#3-5. 201903과 202103의 총매출금액, 총매출건수 증감률 계산
+w11 <- w1 %>% 
+  filter(기준년월 == "201903" | 기준년월 == "202103") %>% 
+  arrange(기준년월, 품목대분류명)
+
+w11_result <- data.frame(rep(NA, nrow(w11)/2), rep(NA, nrow(w11)/2), rep(NA, nrow(w11)/2))
+for (i in 1:(nrow(w11)/2)) {
+  if (w11[i,2] == w11[i+13,2]) {
+    w11_result[i,1] <- w11[i,2]
+    w11_result[i,2] <- round((w11[i+13,4] - w11[i, 4]) / w11[i, 4] * 100,2)
+    w11_result[i,3] <- round((w11[i+13,3] - w11[i, 3]) / w11[i, 3] * 100,2)
+  }
+}
+colnames(w11_result)[1] <- "품목대분류명"
+colnames(w11_result)[2] <- "총매출금액 증감률"
+colnames(w11_result)[3] <- "총매출건수 증감률"
+
+  
 ##################################
 
 
@@ -121,62 +303,3 @@ ggplot(trend_age_f,aes(x = 기준년월, y = percent, group = 품목대분류명
        y = "Percent(%)") +
   scale_y_continuous(limits = c(0,25)) +
   facet_grid(trend_age_f$연령 ~ trend_age_f$고객소재지_광역시도)
-
-
-###############################################################################
-
-#3. 지역별, 성별, 연령에 따른 중분류명 트렌드 파악 
-trend_sex_age <- d1 %>% 
-  group_by(기준년월,성별,연령, 품목중분류명) %>% 
-  summarise(n = n()) %>% 
-  mutate(percent = n / sum(n) * 100) %>% 
-  arrange(기준년월,성별, 연령, desc(percent))
-trend_sex_age$percent <- round(trend_sex_age$percent,2)
-
-
-#4.지역에 따른 가구생애주기 비율 확인 
-p3 <- d1 %>% 
-  group_by(기준년월,고객소재지_광역시도, 가구생애주기) %>% 
-  summarise(n = n()) %>% 
-  mutate(percent = n / sum(n) * 100) %>% 
-  arrange(기준년월,고객소재지_광역시도, 가구생애주기, desc(percent))
-p3$percent <- round(p3$percent,2)
-
-
-#4.1 지역별, 가구생애주기에 따른 중분류명 트렌드 파악
-trend_family <- d1 %>% 
-  group_by(기준년월, 가구생애주기, 품목중분류명) %>% 
-  summarise(n = n()) %>% 
-  mutate(percent = n / sum(n) * 100) %>% 
-  arrange(기준년월, 가구생애주기, desc(percent))
-trend_family$percent <- round(trend_family$percent,2)
-
-
-#5-1.지역별, 품복중분류명에 따른 매출금액 요약통계량
-trend_sales <- d1 %>% 
-  group_by(기준년월, 고객소재지_광역시도,품목중분류명) %>% 
-  summarise(sales_mean = mean(매출금액)) %>% 
-  arrange(기준년월, 고객소재지_광역시도,desc(sales_mean))
-trend_sales$sales_mean <- round(trend_sales$sales_mean,2)
-
-
-#6-1.지역별, 품복중분류명에 따른 매출건수 요약통계량
-trend_sales_count <- d1 %>% 
-  group_by(기준년월, 고객소재지_광역시도,품목중분류명) %>% 
-  summarise(sales_count_mean = mean(매출건수)) %>% 
-  arrange(기준년월, 고객소재지_광역시도,desc(sales_count_mean))
-trend_sales_count$sales_count_mean <- round(trend_sales_count$sales_count_mean,2)
-
-
-a <- d1 %>% 
-  filter(기준년 == "2019" & 품목대분류명 == "의류" &  고객소재지_광역시도 == "서울특별시")
-
-
-
-
-
-
-
-
-
-
