@@ -21,17 +21,19 @@ r1 <- d1 %>%
   group_by(기준년월, 고객소재지_광역시도, 품목대분류명) %>% 
   summarise(총매출건수 = sum(매출건수), 총매출금액 = sum(매출금액)) %>% 
   mutate(평균매출금액 = 총매출금액 / 총매출건수) 
+
   
 r2 <- d1 %>% 
   group_by(기준년월, 고객소재지_광역시도, 품목대분류명, 품목중분류명) %>% 
   summarise(총매출건수 = sum(매출건수), 총매출금액 = sum(매출금액)) %>% 
   mutate(평균매출금액 = 총매출금액 / 총매출건수) 
-  
+
 
 #2-1. 년도별, 대분류명별,중분류명별 평균매출 건수
 r3 <- d1 %>% 
   group_by(기준년월, 고객소재지_광역시도, 품목대분류명) %>% 
   summarise(평균매출건수 = mean(매출건수))
+
 
 r4 <- d1 %>% 
   group_by(기준년월, 고객소재지_광역시도, 품목대분류명, 품목중분류명) %>% 
@@ -55,6 +57,7 @@ r7 <- d1 %>%
   summarise(n = n()) %>% 
   mutate(percent = round(n / sum(n) * 100,2))
 
+
 r8 <- d1 %>% 
   group_by(기준년월, 고객소재지_광역시도, 품목대분류명, 품목중분류명, 가구생애주기) %>% 
   summarise(n = n()) %>% 
@@ -71,10 +74,10 @@ r10 <- d1 %>%
   summarise(n = n()) %>% 
   mutate(percent = round(n / sum(n) * 100,2))
 
-#2-5. 201903과 202103의 총매출금액, 총매출건수 증감률 계산
-r11 <- r1 %>% 
+#2-5. 201903과 202103의 중분류별 총매출금액, 총매출건수 증감률 계산
+r11 <- r2 %>% 
   filter(기준년월 == "201903" | 기준년월 == "202103") %>% 
-  arrange(기준년월, 품목대분류명)
+  arrange(기준년월, 품목대분류명, 품목중분류명)
 
 r11_seoul <- r11 %>% 
   filter(고객소재지_광역시도 == "서울특별시")
@@ -84,49 +87,91 @@ r11_incheon <- r11 %>%
   filter(고객소재지_광역시도 == "인천광역시")
 
 #서울 증감률
-r11_seoul_result <- data.frame(rep(NA, nrow(r11_seoul)/2), rep(NA, nrow(r11_seoul)/2), rep(NA, nrow(r11_seoul)/2))
-for (i in 1:(nrow(r11_seoul)/2)) {
-  if (r11_seoul[i,3] == r11_seoul[i+13,3]) {
-    r11_seoul_result[i,1] <- r11_seoul[i,3]
-    r11_seoul_result[i,2] <- round((r11_seoul[i+13,5] - r11_seoul[i, 5]) / r11_seoul[i, 5] * 100,2)
-    r11_seoul_result[i,3] <- round((r11_seoul[i+13,4] - r11_seoul[i, 4]) / r11_seoul[i, 4] * 100,2)
+a1 <- r11_seoul %>% 
+  filter(기준년월 == "201903")
+a2 <- r11_seoul %>% 
+  filter(기준년월 == "202103") 
+a2[which(a2$품목중분류명 %in% a1$품목중분류명 == FALSE),]
+#서울 데이터 중에서 대분류 건강 중에서 중분류 다이어트가 201903에 없음. 
+
+r11_seoul_f <- r11_seoul %>% 
+  filter(품목중분류명 != "다이어트")
+r11_seoul_result <- data.frame(rep(NA, nrow(r11_seoul_f)/2), rep(NA, nrow(r11_seoul_f)/2), rep(NA, nrow(r11_seoul_f)/2),rep(NA, nrow(r11_seoul_f)/2))
+
+for (i in 1:(nrow(r11_seoul_f)/2)) {
+  if (r11_seoul_f[i,4] == r11_seoul_f[i+49,4]) {
+    r11_seoul_result[i,1] <- r11_seoul_f[i,3]
+    r11_seoul_result[i,2] <- r11_seoul_f[i,4]
+    r11_seoul_result[i,3] <- round((r11_seoul_f[i+49,5] - r11_seoul_f[i, 5]) / r11_seoul_f[i, 5] * 100,2)
+    r11_seoul_result[i,4] <- round((r11_seoul_f[i+49,6] - r11_seoul_f[i, 6]) / r11_seoul_f[i, 6] * 100,2)
   }
 }
+
 colnames(r11_seoul_result)[1] <- "품목대분류명"
-colnames(r11_seoul_result)[2] <- "총매출금액 증감률"
+colnames(r11_seoul_result)[2] <- "품목중분류명"
 colnames(r11_seoul_result)[3] <- "총매출건수 증감률"
+colnames(r11_seoul_result)[4] <- "총매출금액 증감률"
+
 r11_seoul_result$고객소재지_광역시도 <- rep("서울특별시", nrow(r11_seoul_result))
-r11_seoul_result <- r11_seoul_result[,c(4,1:3)]
+r11_seoul_result <- r11_seoul_result[,c(5,1:4)]
 
 #경기도 증감률
-r11_gyeonggido_result <- data.frame(rep(NA, nrow(r11_gyeonggido)/2), rep(NA, nrow(r11_gyeonggido)/2), rep(NA, nrow(r11_gyeonggido)/2))
-for (i in 1:(nrow(r11_gyeonggido)/2)) {
-  if (r11_gyeonggido[i,3] == r11_gyeonggido[i+13,3]) {
-    r11_gyeonggido_result[i,1] <- r11_gyeonggido[i,3]
-    r11_gyeonggido_result[i,2] <- round((r11_gyeonggido[i+13,5] - r11_gyeonggido[i, 5]) / r11_gyeonggido[i, 5] * 100,2)
-    r11_gyeonggido_result[i,3] <- round((r11_gyeonggido[i+13,4] - r11_gyeonggido[i, 4]) / r11_gyeonggido[i, 4] * 100,2)
+a3 <- r11_gyeonggido %>% 
+  filter(기준년월 == "201903")
+a4 <- r11_gyeonggido %>% 
+  filter(기준년월 == "202103") 
+a4[which(a4$품목중분류명 %in% a3$품목중분류명 == FALSE),]
+#경기도 데이터 중에서 대분류 건강 중에서 중분류 다이어트가 201903에 없음. 
+
+r11_gyeonggido_f <- r11_gyeonggido %>% 
+  filter(품목중분류명 != "다이어트")
+
+r11_gyeonggido_result <- data.frame(rep(NA, nrow(r11_gyeonggido_f)/2), rep(NA, nrow(r11_gyeonggido_f)/2), rep(NA, nrow(r11_gyeonggido_f)/2),rep(NA, nrow(r11_gyeonggido_f)/2))
+
+for (i in 1:(nrow(r11_gyeonggido_f)/2)) {
+  if (r11_gyeonggido_f[i,4] == r11_gyeonggido_f[i+49,4]) {
+    r11_gyeonggido_result[i,1] <- r11_gyeonggido_f[i,3]
+    r11_gyeonggido_result[i,2] <- r11_gyeonggido_f[i,4]
+    r11_gyeonggido_result[i,3] <- round((r11_gyeonggido_f[i+49,5] - r11_gyeonggido_f[i, 5]) / r11_gyeonggido_f[i, 5] * 100,2)
+    r11_gyeonggido_result[i,4] <- round((r11_gyeonggido_f[i+49,6] - r11_gyeonggido_f[i, 6]) / r11_gyeonggido_f[i, 6] * 100,2)
   }
 }
+
 colnames(r11_gyeonggido_result)[1] <- "품목대분류명"
-colnames(r11_gyeonggido_result)[2] <- "총매출금액 증감률"
+colnames(r11_gyeonggido_result)[2] <- "품목중분류명"
 colnames(r11_gyeonggido_result)[3] <- "총매출건수 증감률"
+colnames(r11_gyeonggido_result)[4] <- "총매출금액 증감률"
+
 r11_gyeonggido_result$고객소재지_광역시도 <- rep("경기도", nrow(r11_gyeonggido_result))
-r11_gyeonggido_result <- r11_gyeonggido_result[,c(4,1:3)]
+r11_gyeonggido_result <- r11_gyeonggido_result[,c(5,1:4)]
 
 #인천 증감률
-r11_incheon_result <- data.frame(rep(NA, nrow(r11_incheon)/2), rep(NA, nrow(r11_incheon)/2), rep(NA, nrow(r11_incheon)/2))
-for (i in 1:(nrow(r11_incheon)/2)) {
-  if (r11_incheon[i,3] == r11_incheon[i+13,3]) {
-    r11_incheon_result[i,1] <- r11_incheon[i,3]
-    r11_incheon_result[i,2] <- round((r11_incheon[i+13,5] - r11_incheon[i, 5]) / r11_incheon[i, 5] * 100,2)
-    r11_incheon_result[i,3] <- round((r11_incheon[i+13,4] - r11_incheon[i, 4]) / r11_incheon[i, 4] * 100,2)
+a5 <- r11_incheon %>% 
+  filter(기준년월 == "201903")
+a6 <- r11_incheon %>% 
+  filter(기준년월 == "202103") 
+a6[which(a6$품목중분류명 %in% a5$품목중분류명 == FALSE),]
+#인천 데이터 중에서 대분류 건강 중에서 중분류 다이어트가 201903에 없음 & 인천 데이터 중에서 대분류 기타 중에서 중분류 기부/후원이 201903에 없음
+
+r11_incheon_f <- r11_incheon %>% 
+  filter(품목중분류명 != "다이어트" | 품목중분류명 != "기부/후원")
+
+r11_incheon_result <- data.frame(rep(NA, nrow(r11_incheon_f)/2), rep(NA, nrow(r11_incheon_f)/2), rep(NA, nrow(r11_incheon_f)/2), rep(NA, nrow(r11_incheon_f)/2))
+
+for (i in 1:(nrow(r11_incheon_f)/2)) {
+  if (r11_incheon_f[i,4] == r11_incheon_f[i+48,4]) {
+    r11_incheon_result[i,1] <- r11_incheon_f[i,3]
+    r11_incheon_result[i,2] <- r11_incheon_f[i,4]
+    r11_incheon_result[i,3] <- round((r11_incheon_f[i+48,5] - r11_incheon_f[i, 5]) / r11_incheon_f[i, 5] * 100,2)
+    r11_incheon_result[i,4] <- round((r11_incheon_f[i+48,6] - r11_incheon_f[i, 6]) / r11_incheon_f[i, 6] * 100,2)
   }
 }
 colnames(r11_incheon_result)[1] <- "품목대분류명"
-colnames(r11_incheon_result)[2] <- "총매출금액 증감률"
-colnames(r11_incheon_result)[3] <- "총매출건수 증감률"
+colnames(r11_incheon_result)[2] <- "품목중분류명"
+colnames(r11_incheon_result)[3] <- "총매출금액 증감률"
+colnames(r11_incheon_result)[4] <- "총매출건수 증감률"
 r11_incheon_result$고객소재지_광역시도 <- rep("인천광역시", nrow(r11_incheon_result))
-r11_incheon_result <- r11_incheon_result[,c(4,1:3)]
+r11_incheon_result <- r11_incheon_result[,c(5,1:4)]
 
 r11_result <- rbind(r11_seoul_result, r11_gyeonggido_result, r11_incheon_result)
 
@@ -189,30 +234,36 @@ w10 <- d1 %>%
   mutate(percent = round(n / sum(n) * 100,2))
 
 #3-5. 201903과 202103의 총매출금액, 총매출건수 증감률 계산
-w11 <- w1 %>% 
+w11 <- w2 %>% 
   filter(기준년월 == "201903" | 기준년월 == "202103") %>% 
-  arrange(기준년월, 품목대분류명)
+  arrange(기준년월, 품목대분류명, 품목중분류명)
 
-w11_result <- data.frame(rep(NA, nrow(w11)/2), rep(NA, nrow(w11)/2), rep(NA, nrow(w11)/2))
-for (i in 1:(nrow(w11)/2)) {
-  if (w11[i,2] == w11[i+13,2]) {
-    w11_result[i,1] <- w11[i,2]
-    w11_result[i,2] <- round((w11[i+13,4] - w11[i, 4]) / w11[i, 4] * 100,2)
-    w11_result[i,3] <- round((w11[i+13,3] - w11[i, 3]) / w11[i, 3] * 100,2)
+a7 <- w11 %>% 
+  filter(기준년월 == "201903")
+a8 <- w11 %>% 
+  filter(기준년월 == "202103") 
+a8[which(a8$품목중분류명 %in% a7$품목중분류명 == FALSE),]
+#전국 데이터 중에서 대분류 건강 중에서 중분류 다이어트가 201903에 없음.
+
+w11_f <- w11 %>% 
+  filter(품목중분류명 != "다이어트")
+
+w11_result <- data.frame(rep(NA, nrow(w11_f)/2), rep(NA, nrow(w11_f)/2), rep(NA, nrow(w11_f)/2), rep(NA, nrow(w11_f)/2))
+for (i in 1:(nrow(w11_f)/2)) {
+  if (w11_f[i,3] == w11_f[i+49,3]) {
+    w11_result[i,1] <- w11_f[i,2]
+    w11_result[i,2] <- w11_f[i,3]
+    w11_result[i,3] <- round((w11_f[i+49,4] - w11_f[i, 4]) / w11_f[i, 4] * 100,2)
+    w11_result[i,4] <- round((w11_f[i+49,5] - w11_f[i, 5]) / w11_f[i, 5] * 100,2)
   }
 }
 colnames(w11_result)[1] <- "품목대분류명"
-colnames(w11_result)[2] <- "총매출금액 증감률"
-colnames(w11_result)[3] <- "총매출건수 증감률"
-
-  
-##################################
+colnames(w11_result)[2] <- "품목중분류명"
+colnames(w11_result)[3] <- "총매출금액 증감률"
+colnames(w11_result)[4] <- "총매출건수 증감률"
 
 
-
-
-
-
+# 4.시각화 -------------------------------------------------------------------
 #1.지역에 따른 성별 비율 확인
 p1 <- d1 %>% 
   group_by(기준년월, 고객소재지_광역시도, 성별) %>% 
