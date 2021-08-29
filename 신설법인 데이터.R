@@ -124,14 +124,21 @@ o2 <- d19 %>%
   summarise(mean_money = mean(자본금)) %>% 
   arrange(시도, 설립일자,desc(mean_money))
 
+#2-11. 시도별, 년도별,중분류별 총자본금 확인 
+o3 <- d19 %>% 
+  group_by(시도,설립일자,대분류명,중분류명) %>% 
+  summarise(sum_money = sum(자본금)) %>% 
+  arrange(시도, 설립일자,desc(sum_money))
+
+
 #2-11. 시도별, 년도별,중분류별 성별 비율 확인 
 d20 <- d19[which(is.na(d19$성별구분) == FALSE),]
-o3 <- d20 %>% 
+o4 <- d20 %>% 
   group_by(시도,설립일자,대분류명,중분류명, 성별구분) %>% 
   summarise(n = n()) %>% 
   mutate(percent = round(n / sum(n) * 100,2))
 
-            
+
 # 3. 트렌드 확인 ---------------------------------------------------------------
 #3-1.지역별 폐업 사유
 ggplot(data11, aes(x = 년도, y = 카운트, group = 폐업사유)) +
